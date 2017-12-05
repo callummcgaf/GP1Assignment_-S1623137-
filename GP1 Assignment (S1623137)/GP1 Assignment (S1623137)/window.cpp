@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 	window = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 344, 344, SDL_WINDOW_SHOWN);
 	windowSurface = SDL_GetWindowSurface(window);
 	
+	// Load images into corresponding surfaces
 	staticImage = SDL_LoadBMP("Arrow Keys.bmp");
 	upImage = SDL_LoadBMP("Arrow Keys (UP).bmp");
 	downImage = SDL_LoadBMP("Arrow Keys (Down).bmp");
@@ -49,6 +50,7 @@ int main(int argc, char *argv[])
 				isRunning = false;
 			}
 
+			// Check if the user has pressed one of the arrow keys, if they have, then the image corresponding to that input will be displayed on the screen as it is being pressed
 			else if (ev.type == SDL_KEYDOWN)
 			{
 				switch (ev.key.keysym.sym)
@@ -67,6 +69,7 @@ int main(int argc, char *argv[])
 					break;
 				}
 			}
+			// Similar to the last check, find if the user is inputing from the mouse and display the images corresponding to that event
 			else if (ev.type == SDL_MOUSEBUTTONDOWN)
 			{
 				if (ev.button.button == SDL_BUTTON_LEFT)
@@ -74,11 +77,13 @@ int main(int argc, char *argv[])
 				else if (ev.button.button == SDL_BUTTON_RIGHT)
 					currentImage = mrightImage;
 			}
+			// If the user has not pressed anything this frame, then change the image displayed to the default image
 			else
 			{
 				currentImage = staticImage;
 			}
 			
+			// Display the current image onto the window surface
 			SDL_BlitSurface(currentImage, NULL, windowSurface, NULL);
 
 			// If the user has not quit the application yet, then update the application window
@@ -86,6 +91,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	// Free the surfaces as not to leave used memory floating after the application has closed
 	SDL_FreeSurface(staticImage);
 	SDL_FreeSurface(upImage);
 	SDL_FreeSurface(downImage);
@@ -97,9 +103,11 @@ int main(int argc, char *argv[])
 	// Destroy the application window and Quit the console
 	SDL_DestroyWindow(window);
 
+	// Clear the image and window surfaces as not to leave media after the application has closed
 	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = nullptr;
 	window = nullptr;
 
+	// Quit the application
 	SDL_Quit();
 
 	return 0;
