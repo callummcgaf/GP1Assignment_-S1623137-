@@ -2,38 +2,47 @@
 #include <SDL.h>
 #include <iostream>
 
-SDL_Surface *OptimizedSurface(std::string filePath, SDL_Surface *windowSurface)
+
+SDL_Texture *LoadTexture(std::string filePath, SDL_Renderer *renderTarget)
 {
-	SDL_Surface *optimizedSurface = nullptr;
+	// Create Texture and load a surface
+	SDL_Texture *texture = nullptr;
 	SDL_Surface *surface = SDL_LoadBMP(filePath.c_str());
+	// If the surface was not loaded then return an error message to the console
 	if (surface == NULL)
 		std::cout << "Error: surface != NULL" << std::endl;
 	else 
 	{
-		optimizedSurface = SDL_ConvertSurface(surface, windowSurface->format, 0);
-		if (optimizedSurface == NULL)
+		// Set the texture to the surface that was loaded
+		texture = SDL_CreateTextureFromSurface(renderTarget, surface);
+		// If the texture is empty then return an error message to the console
+		if (texture == NULL)
 			std::cout << "Error: windowSurface != NULL" << std::endl;
 	}
 
+	// Free the loaded surface to become empty
 	SDL_FreeSurface(surface);
 
-	return optimizedSurface;
+	// Return the texture
+	return texture;
 
 }
 
 int main(int argc, char *argv[])
 {
-	// Declare the window to be created and the window surfaces to be used
+	// Declare the window to be created and the textures to be used
 	SDL_Window *window = nullptr;
-	SDL_Surface *windowSurface = nullptr;
-	SDL_Surface *staticImage = nullptr;
-	SDL_Surface *upImage = nullptr;
-	SDL_Surface *downImage = nullptr;
-	SDL_Surface *rightImage = nullptr;
-	SDL_Surface *leftImage = nullptr;
-	SDL_Surface *currentImage = nullptr;
-	SDL_Surface *mleftImage = nullptr;
-	SDL_Surface *mrightImage = nullptr;
+	SDL_Texture *staticImage = nullptr;
+	SDL_Texture *upImage = nullptr;
+	SDL_Texture *downImage = nullptr;
+	SDL_Texture *rightImage = nullptr;
+	SDL_Texture *leftImage = nullptr;
+	SDL_Texture *currentImage = nullptr;
+	SDL_Texture *mleftImage = nullptr;
+	SDL_Texture *mrightImage = nullptr;
+
+	// Create a renderer to be used to display the textures
+	SDL_Renderer *renderTarget = nullptr;
 
 	// Initialise SDL for video display and game contollers
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
@@ -61,18 +70,20 @@ int main(int argc, char *argv[])
 
 	// Then create an application window and display in the centre of the screen
 	window = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 344, 344, SDL_WINDOW_SHOWN);
-	windowSurface = SDL_GetWindowSurface(window);
-	
-	// Load images into corresponding surfaces
-	staticImage = OptimizedSurface("TestSmall.BMP", windowSurface);
-	upImage = SDL_LoadBMP("Arrow Keys (UP).bmp");
-	downImage = SDL_LoadBMP("Arrow Keys (Down).bmp");
-	rightImage = SDL_LoadBMP("Arrow Keys (Right).bmp");
-	leftImage = SDL_LoadBMP("Arrow Keys (Left).bmp");
-	mleftImage = SDL_LoadBMP("Mouse (Left).bmp");
-	mrightImage = SDL_LoadBMP("Mouse (Right).bmp");
+	// Set the renderer equal to the window that was created, using the first available driver and setting the rendering process to be carried out by the GPU instead of the CPU
+	renderTarget = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+	// Load images into corresponding textures
+	staticImage = LoadTexture("TestSmall.bmp", renderTarget);
+	upImage = LoadTexture("Arrow Keys (UP).bmp", renderTarget);
+	downImage = LoadTexture("Arrow Keys (Down).bmp", renderTarget);
+	rightImage = LoadTexture("Arrow Keys (Right).bmp", renderTarget);
+	leftImage = LoadTexture("Arrow Keys (Left).bmp", renderTarget);
+	mleftImage = LoadTexture("Mouse (Left).bmp", renderTarget);
+	mrightImage = LoadTexture("Mouse (Right).bmp", renderTarget);
 	currentImage = staticImage;
 
+	// draw a rectangle for the Application window to strech any images to fit the full screen
 	SDL_Rect drawingRect;
 	drawingRect.x = drawingRect.y = 0;
 	drawingRect.w = drawingRect.h = 344;
@@ -136,25 +147,26 @@ int main(int argc, char *argv[])
 				currentImage = staticImage;
 			}
 			
-			// Display the current image onto the window surface
-			SDL_BlitScaled(currentImage, NULL, windowSurface, &drawingRect);
-
-			// If the user has not quit the application yet, then update the application window
-			SDL_UpdateWindowSurface(window);
+			// Clears the last texture that was rendered
+			SDL_RenderClear(renderTarget);
+			// Copies the contents of the renderer and passes in the texture to be displayed 
+			SDL_RenderCopy(renderTarget, currentImage, NULL, NULL);
+			// Presents the rendered images to the user
+			SDL_RenderPresent(renderTarget);
 		}
 	}
 
-	// Free the surfaces as not to leave used memory floating after the application has closed
-	SDL_FreeSurface(staticImage);
-	SDL_FreeSurface(upImage);
-	SDL_FreeSurface(downImage);
-	SDL_FreeSurface(rightImage);
-	SDL_FreeSurface(leftImage);
-	SDL_FreeSurface(mleftImage);
-	SDL_FreeSurface(mrightImage);
+	// Destroy the textures as not to leave used memory floating after the application has closed
+	SDL_DestroyTexture(staticImage);
+	SDL_DestroyTexture(upImage);
+	SDL_DestroyTexture(downImage);
+	SDL_DestroyTexture(rightImage);
+	SDL_DestroyTexture(leftImage);
+	SDL_DestroyTexture(mleftImage);
+	SDL_DestroyTexture(mrightImage);
 
 	// Destroy the application window and Quit the console
-	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderTarget);
 
 	// Checks if the SDL controller is empty
 	if (controller != NULL)
@@ -165,9 +177,10 @@ int main(int argc, char *argv[])
 	}
 
 
-	// Clear the image and window surfaces as not to leave media after the application has closed
-	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = windowSurface = nullptr;
-	window = nullptr;
+	// Clear the image textures as not to leave media after the application has closed
+	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = nullptr;
+	// Clear the renderer
+	renderTarget = nullptr;
 
 	// Quit the application
 	SDL_Quit();
