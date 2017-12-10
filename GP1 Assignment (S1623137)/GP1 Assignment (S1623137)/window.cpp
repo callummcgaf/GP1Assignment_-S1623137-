@@ -17,7 +17,22 @@ int main(int argc, char *argv[])
 	SDL_Surface *mrightImage = nullptr;
 
 	// Initialise SDL for video display
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
+
+	SDL_Log("%d number of controllers are connected", 0);
+
+	SDL_GameController *controller = nullptr;
+
+	for (int i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		if (SDL_IsGameController(i))
+		{
+			controller = SDL_GameControllerOpen(i);
+			break;
+		}
+	}
+
+	std::cout << "Contorller Name: " << SDL_GameControllerName(controller) << std::endl;
 
 	// Then create an application window and display in the centre of the screen
 	window = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 344, 344, SDL_WINDOW_SHOWN);
@@ -77,6 +92,14 @@ int main(int argc, char *argv[])
 				else if (ev.button.button == SDL_BUTTON_RIGHT)
 					currentImage = mrightImage;
 			}
+
+			else if (ev.type == SDL_CONTROLLERBUTTONDOWN)
+			{
+				if (ev.cbutton.which == 0)
+				{
+					std::cout << (int)ev.cbutton.button << std::endl;
+				}
+			}
 			// If the user has not pressed anything this frame, then change the image displayed to the default image
 			else
 			{
@@ -102,6 +125,12 @@ int main(int argc, char *argv[])
 
 	// Destroy the application window and Quit the console
 	SDL_DestroyWindow(window);
+
+	if (controller != NULL)
+	{
+		SDL_GameControllerClose(controller);
+	}
+
 
 	// Clear the image and window surfaces as not to leave media after the application has closed
 	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = nullptr;
