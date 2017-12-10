@@ -2,6 +2,25 @@
 #include <SDL.h>
 #include <iostream>
 
+SDL_Surface *OptimizedSurface(std::string filePath, SDL_Surface *windowSurface)
+{
+	SDL_Surface *optimizedSurface = nullptr;
+	SDL_Surface *surface = SDL_LoadBMP(filePath.c_str());
+	if (surface == NULL)
+		std::cout << "Error: surface != NULL" << std::endl;
+	else 
+	{
+		optimizedSurface = SDL_ConvertSurface(surface, windowSurface->format, 0);
+		if (optimizedSurface == NULL)
+			std::cout << "Error: windowSurface != NULL" << std::endl;
+	}
+
+	SDL_FreeSurface(surface);
+
+	return optimizedSurface;
+
+}
+
 int main(int argc, char *argv[])
 {
 	// Declare the window to be created and the window surfaces to be used
@@ -45,7 +64,7 @@ int main(int argc, char *argv[])
 	windowSurface = SDL_GetWindowSurface(window);
 	
 	// Load images into corresponding surfaces
-	staticImage = SDL_LoadBMP("Arrow Keys.bmp");
+	staticImage = OptimizedSurface("TestSmall.BMP", windowSurface);
 	upImage = SDL_LoadBMP("Arrow Keys (UP).bmp");
 	downImage = SDL_LoadBMP("Arrow Keys (Down).bmp");
 	rightImage = SDL_LoadBMP("Arrow Keys (Right).bmp");
@@ -53,6 +72,10 @@ int main(int argc, char *argv[])
 	mleftImage = SDL_LoadBMP("Mouse (Left).bmp");
 	mrightImage = SDL_LoadBMP("Mouse (Right).bmp");
 	currentImage = staticImage;
+
+	SDL_Rect drawingRect;
+	drawingRect.x = drawingRect.y = 0;
+	drawingRect.w = drawingRect.h = 344;
 
 	//Set up the game loop
 	bool isRunning = true;
@@ -114,7 +137,7 @@ int main(int argc, char *argv[])
 			}
 			
 			// Display the current image onto the window surface
-			SDL_BlitSurface(currentImage, NULL, windowSurface, NULL);
+			SDL_BlitScaled(currentImage, NULL, windowSurface, &drawingRect);
 
 			// If the user has not quit the application yet, then update the application window
 			SDL_UpdateWindowSurface(window);
@@ -143,7 +166,7 @@ int main(int argc, char *argv[])
 
 
 	// Clear the image and window surfaces as not to leave media after the application has closed
-	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = nullptr;
+	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = windowSurface = nullptr;
 	window = nullptr;
 
 	// Quit the application
