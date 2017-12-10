@@ -16,22 +16,28 @@ int main(int argc, char *argv[])
 	SDL_Surface *mleftImage = nullptr;
 	SDL_Surface *mrightImage = nullptr;
 
-	// Initialise SDL for video display
+	// Initialise SDL for video display and game contollers
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 
+	// Writes in console how many controllers are connected to the PC
 	SDL_Log("%d number of controllers are connected", 0);
 
+	// Creates a controller to be used later
 	SDL_GameController *controller = nullptr;
 
+	// Sets up a for loop equal to the amount of Joysticks connected to the PC
 	for (int i = 0; i < SDL_NumJoysticks(); i++)
 	{
+		// Checks if the joystick is a game controller
 		if (SDL_IsGameController(i))
 		{
+			// Sets SDL controller to the physical controller
 			controller = SDL_GameControllerOpen(i);
 			break;
 		}
 	}
 
+	// Records in console the name of the console
 	std::cout << "Contorller Name: " << SDL_GameControllerName(controller) << std::endl;
 
 	// Then create an application window and display in the centre of the screen
@@ -93,6 +99,7 @@ int main(int argc, char *argv[])
 					currentImage = mrightImage;
 			}
 
+			// Similar to the prevoius checks, find if the user has pressed a button on the physical game controller and record in the console which button has been pressed in its numerical format
 			else if (ev.type == SDL_CONTROLLERBUTTONDOWN)
 			{
 				if (ev.cbutton.which == 0)
@@ -126,9 +133,12 @@ int main(int argc, char *argv[])
 	// Destroy the application window and Quit the console
 	SDL_DestroyWindow(window);
 
+	// Checks if the SDL controller is empty
 	if (controller != NULL)
 	{
+		// If not then close the controller and set the SDL controller to empty
 		SDL_GameControllerClose(controller);
+		controller = nullptr;
 	}
 
 
