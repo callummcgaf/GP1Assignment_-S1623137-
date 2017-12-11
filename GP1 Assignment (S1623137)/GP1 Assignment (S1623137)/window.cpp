@@ -1,5 +1,6 @@
 //Using SDL and standard IO
 #include <SDL.h>
+#include <SDL_image.h>
 #include <iostream>
 
 
@@ -7,7 +8,7 @@ SDL_Texture *LoadTexture(std::string filePath, SDL_Renderer *renderTarget)
 {
 	// Create Texture and load a surface
 	SDL_Texture *texture = nullptr;
-	SDL_Surface *surface = SDL_LoadBMP(filePath.c_str());
+	SDL_Surface *surface = IMG_Load(filePath.c_str());
 	// If the surface was not loaded then return an error message to the console
 	if (surface == NULL)
 		std::cout << "Error: surface != NULL" << std::endl;
@@ -47,6 +48,12 @@ int main(int argc, char *argv[])
 	// Initialise SDL for video display and game contollers
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 
+	int imgFlags = IMG_INIT_PNG;
+	if (IMG_Init(imgFlags) != imgFlags)
+	{
+		std::cout << "Error: " << IMG_GetError << std::endl;
+	}
+
 	// Writes in console how many controllers are connected to the PC
 	SDL_Log("%d number of controllers are connected", 0);
 
@@ -74,7 +81,7 @@ int main(int argc, char *argv[])
 	renderTarget = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
 	// Load images into corresponding textures
-	staticImage = LoadTexture("TestSmall.bmp", renderTarget);
+	staticImage = LoadTexture("TestSmall.png", renderTarget);
 	upImage = LoadTexture("Arrow Keys (UP).bmp", renderTarget);
 	downImage = LoadTexture("Arrow Keys (Down).bmp", renderTarget);
 	rightImage = LoadTexture("Arrow Keys (Right).bmp", renderTarget);
