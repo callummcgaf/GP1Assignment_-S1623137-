@@ -31,26 +31,41 @@ SDL_Texture *LoadTexture(std::string filePath, SDL_Renderer *renderTarget)
 
 int main(int argc, char *argv[])
 {
+
+	// Create float values to be used for various reasons later in the script
+	float frameTime = 0;
+	float prevTime = 0;
+	float currentTime = 0;
+	float deltaTime = 0;
+	float moveSpeed = 3.0f;
+	// Set up a variable to record the state of keys inbetween refreshes.
+	const Uint8*keyState;
+
 	// Declare the window to be created and the textures to be used
 	SDL_Window *window = nullptr;
-	SDL_Texture *staticImage = nullptr;
-	SDL_Texture *upImage = nullptr;
-	SDL_Texture *downImage = nullptr;
-	SDL_Texture *rightImage = nullptr;
-	SDL_Texture *leftImage = nullptr;
-	SDL_Texture *currentImage = nullptr;
-	SDL_Texture *mleftImage = nullptr;
-	SDL_Texture *mrightImage = nullptr;
 
 	// Create a renderer to be used to display the textures
 	SDL_Renderer *renderTarget = nullptr;
 
+	// Create texture to be used later
+	SDL_Texture *currentImage = nullptr;
+
+	// Create an unseen rectangle in the screen to skew images loaded within it
+	SDL_Rect playerRect;
+	// Create a rectagle to represent the players position on-screen and pass in values for x,y,width and Height
+	SDL_Rect playerPosition = { 0.0f, 0.0f, 46, 50};
+	// Create new integers to be used later
+	int frameWidth, frameHeight;
+	int textureWidth, textureHeight;
+
 	// Initialise SDL for video display and game contollers
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER);
 
+	// Initialise SDL image to load png images
 	int imgFlags = IMG_INIT_PNG;
 	if (IMG_Init(imgFlags) != imgFlags)
 	{
+		// If an error while initialising SDL image is found, return error message to console
 		std::cout << "Error: " << IMG_GetError << std::endl;
 	}
 
@@ -76,24 +91,27 @@ int main(int argc, char *argv[])
 	std::cout << "Contorller Name: " << SDL_GameControllerName(controller) << std::endl;
 
 	// Then create an application window and display in the centre of the screen
-	window = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 344, 344, SDL_WINDOW_SHOWN);
-	// Set the renderer equal to the window that was created, using the first available driver and setting the rendering process to be carried out by the GPU instead of the CPU
-	renderTarget = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	window = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+	// Set the renderer equal to the window that was created, using the first available driver and setting the rendering process to be carried out by the GPU instead of the CPU, Update the renderer based on the verical sync of the monitior
+	renderTarget = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-	// Load images into corresponding textures
-	staticImage = LoadTexture("TestSmall.png", renderTarget);
-	upImage = LoadTexture("Arrow Keys (UP).bmp", renderTarget);
-	downImage = LoadTexture("Arrow Keys (Down).bmp", renderTarget);
-	rightImage = LoadTexture("Arrow Keys (Right).bmp", renderTarget);
-	leftImage = LoadTexture("Arrow Keys (Left).bmp", renderTarget);
-	mleftImage = LoadTexture("Mouse (Left).bmp", renderTarget);
-	mrightImage = LoadTexture("Mouse (Right).bmp", renderTarget);
-	currentImage = staticImage;
+	// Load png image into a texture
+	currentImage = LoadTexture("playerSprite.png", renderTarget);
 
-	// draw a rectangle for the Application window to strech any images to fit the full screen
-	SDL_Rect drawingRect;
-	drawingRect.x = drawingRect.y = 0;
-	drawingRect.w = drawingRect.h = 344;
+	// Retreive image properties such as heigth and width, from the image currently loaded in the renderer
+	SDL_QueryTexture(currentImage, NULL, NULL, &textureWidth, &textureHeight);
+
+	// Set frame width and height to only contain 1 graphical instance of the character from the original texture
+	frameWidth = textureWidth / 8;
+	frameHeight = textureHeight / 3;
+
+	// Create values for the before declared player rectangle to be equal to the height and width of before mentioned character texture
+	playerRect.x = playerRect.y = 0;
+	playerRect.w = frameWidth;
+	playerRect.h = frameHeight;
+
+	// Draw a basic ectangle across the whole screen to contrast with loaded image
+	SDL_SetRenderDrawColor(renderTarget, 0xFF, 0, 0, 0xFF);
 
 	//Set up the game loop
 	bool isRunning = true;
@@ -103,6 +121,12 @@ int main(int argc, char *argv[])
 	// While the boolean 'isRunning' is equal to true
 	while (isRunning)
 	{
+		// Gets time frame that has past since  the program was launched
+		currentTime = SDL_GetTicks();
+		// Sets a timer to be used to create a standard refresh rate for loading new images based on a timer
+		deltaTime = (currentTime - prevTime)/ 1000.0f;
+		// Set previously recorded time to new current time to use next time the program repeates this loop
+		prevTime = currentTime;
 		// And While the events given by the user are not equal to 0
 		while (SDL_PollEvent(&ev) != 0)
 		{
@@ -112,65 +136,38 @@ int main(int argc, char *argv[])
 				isRunning = false;
 			}
 
-			// Check if the user has pressed one of the arrow keys, if they have, then the image corresponding to that input will be displayed on the screen as it is being pressed
-			else if (ev.type == SDL_KEYDOWN)
-			{
-				switch (ev.key.keysym.sym)
-				{
-				case SDLK_UP:
-					currentImage = upImage;
-					break;
-				case SDLK_DOWN:
-					currentImage = downImage;
-					break;
-				case SDLK_RIGHT:
-					currentImage = rightImage;
-					break;
-				case SDLK_LEFT:
-					currentImage = leftImage;
-					break;
-				}
-			}
-			// Similar to the last check, find if the user is inputing from the mouse and display the images corresponding to that event
-			else if (ev.type == SDL_MOUSEBUTTONDOWN)
-			{
-				if (ev.button.button == SDL_BUTTON_LEFT)
-					currentImage = mleftImage;
-				else if (ev.button.button == SDL_BUTTON_RIGHT)
-					currentImage = mrightImage;
-			}
-
-			// Similar to the prevoius checks, find if the user has pressed a button on the physical game controller and record in the console which button has been pressed in its numerical format
-			else if (ev.type == SDL_CONTROLLERBUTTONDOWN)
-			{
-				if (ev.cbutton.which == 0)
-				{
-					std::cout << (int)ev.cbutton.button << std::endl;
-				}
-			}
-			// If the user has not pressed anything this frame, then change the image displayed to the default image
-			else
-			{
-				currentImage = staticImage;
-			}
-			
-			// Clears the last texture that was rendered
-			SDL_RenderClear(renderTarget);
-			// Copies the contents of the renderer and passes in the texture to be displayed 
-			SDL_RenderCopy(renderTarget, currentImage, NULL, NULL);
-			// Presents the rendered images to the user
-			SDL_RenderPresent(renderTarget);
 		}
-	}
 
-	// Destroy the textures as not to leave used memory floating after the application has closed
-	SDL_DestroyTexture(staticImage);
-	SDL_DestroyTexture(upImage);
-	SDL_DestroyTexture(downImage);
-	SDL_DestroyTexture(rightImage);
-	SDL_DestroyTexture(leftImage);
-	SDL_DestroyTexture(mleftImage);
-	SDL_DestroyTexture(mrightImage);
+		// Checks keyboard to find if any buttons have been pressed since last loop
+		keyState = SDL_GetKeyboardState(NULL);
+		// If they have and match the arrows used for movement, then move the players sprite a certain number of pixels to either the right or the left, depending on which movement key was pressed
+		if (keyState[SDL_SCANCODE_RIGHT])
+			playerPosition.x += moveSpeed;
+		if (keyState[SDL_SCANCODE_LEFT])
+			playerPosition.x -= moveSpeed;
+
+		// Set frame time equal to recorded runtime
+		frameTime += deltaTime;
+
+		// If runtime is more than or equal to a 10th of a second
+		if (frameTime >= 0.10f)
+		{
+			// Then reset the frametime to reset timer
+			frameTime = 0;
+			// Cycle to next stage in the sprite animation via moving to the next section of the image
+			playerRect.x += frameWidth;
+			// If the rectangle has reached the edge of the sprite sheet, then reset to the first part of the sprite sheet
+			if (playerRect.x >= textureWidth)
+				playerRect.x = 0;
+		}
+
+		// Clears the last texture that was rendered
+		SDL_RenderClear(renderTarget);
+		// Copies the contents of the renderer and passes in the texture to be displayed 
+		SDL_RenderCopy(renderTarget, currentImage, &playerRect, &playerPosition);
+		// Presents the rendered images to the user
+		SDL_RenderPresent(renderTarget);
+	}
 
 	// Destroy the application window and Quit the console
 	SDL_DestroyRenderer(renderTarget);
@@ -185,7 +182,7 @@ int main(int argc, char *argv[])
 
 
 	// Clear the image textures as not to leave media after the application has closed
-	currentImage = staticImage = upImage = downImage = rightImage = leftImage = mleftImage = mrightImage = nullptr;
+	currentImage = nullptr;
 	// Clear the renderer
 	renderTarget = nullptr;
 
