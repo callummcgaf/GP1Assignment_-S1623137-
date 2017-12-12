@@ -3,7 +3,6 @@
 #include <SDL_image.h>
 #include <iostream>
 
-
 SDL_Texture *LoadTexture(std::string filePath, SDL_Renderer *renderTarget)
 {
 	// Create Texture and load a surface
@@ -12,7 +11,7 @@ SDL_Texture *LoadTexture(std::string filePath, SDL_Renderer *renderTarget)
 	// If the surface was not loaded then return an error message to the console
 	if (surface == NULL)
 		std::cout << "Error: surface != NULL" << std::endl;
-	else 
+	else
 	{
 		// Set the texture to the surface that was loaded
 		texture = SDL_CreateTextureFromSurface(renderTarget, surface);
@@ -169,6 +168,9 @@ int main(int argc, char *argv[])
 		SDL_RenderPresent(renderTarget);
 	}
 
+	SDL_DestroyWindow(window);
+	SDL_DestroyTexture(currentImage);
+
 	// Destroy the application window and Quit the console
 	SDL_DestroyRenderer(renderTarget);
 
@@ -181,10 +183,16 @@ int main(int argc, char *argv[])
 	}
 
 
+	
+
 	// Clear the image textures as not to leave media after the application has closed
 	currentImage = nullptr;
 	// Clear the renderer
 	renderTarget = nullptr;
+
+	
+
+	IMG_Quit();
 
 	// Quit the application
 	SDL_Quit();
